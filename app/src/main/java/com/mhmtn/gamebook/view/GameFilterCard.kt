@@ -40,26 +40,27 @@ import com.mhmtn.gamebook.model.GameListItem
 @Composable
 fun GameFilterCard(
     game:GameListItem,
-    navController: NavController
+    navController: NavController,
+    modifier : Modifier
 ) {
     Card(
-        shape = MaterialTheme.shapes.small,
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier
             .padding(8.dp)
+            .requiredHeight(height = 150.dp)
             .clickable { navController.navigate("game_detail_screen/${game.id}") }
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
-
         Row (
             modifier = Modifier.fillMaxSize()
         ){
             SubcomposeAsyncImage(
                 model = game.thumbnail,
                 contentDescription = "",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxHeight(fraction = 0.3f),
+                contentScale = ContentScale.FillHeight,
+                modifier = Modifier.fillMaxWidth(fraction = 0.3f),
                 loading = {
                     ConstraintLayout(modifier = Modifier.fillMaxSize(fraction = 0.5f)) {
                         val indicatorRef = createRef()
@@ -98,9 +99,9 @@ fun GameFilterCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 2
+                    maxLines = 3
                 )
-                Spacer(modifier = Modifier.padding(10.dp))
+                Spacer(modifier = Modifier.padding(17.dp))
 
                 Row (
                     horizontalArrangement = Arrangement.End,

@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +62,7 @@ import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.mhmtn.gamebook.model.GameListItem
 import com.mhmtn.gamebook.viewmodel.GameListViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun GameListScreen(
@@ -154,6 +156,14 @@ fun GameListView(
     val screenHeight = LocalContext.current.resources.displayMetrics.heightPixels.dp /
             LocalDensity.current.density
 
+    LaunchedEffect(Unit){
+        while (true) {
+            delay(4000L)
+            val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
+            pagerState.scrollToPage(nextPage)
+        }
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2)
     ) {
@@ -229,6 +239,7 @@ fun <T> List<T>.takeRandomElements(numberOfElements: Int): List<T> {
 fun LazyGridScope.header(
     content : @Composable LazyGridItemScope.() -> Unit
 ){
+
     item(
         span = { GridItemSpan(maxLineSpan) },
         content = content
