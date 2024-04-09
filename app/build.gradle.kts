@@ -103,4 +103,6 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-systemuicontroller:0.27.0")
     //
     implementation ("com.google.accompanist:accompanist-pager:0.18.0")
+
+    implementation ("androidx.core:core-splashscreen:1.0.1")
 }
