@@ -15,6 +15,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Gamebook"
         tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3239252626734491~8142584718"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

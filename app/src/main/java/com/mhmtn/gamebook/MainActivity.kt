@@ -46,6 +46,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.android.gms.ads.MobileAds
 import com.mhmtn.gamebook.ui.theme.GamebookTheme
 import com.mhmtn.gamebook.view.GameDetailScreen
 import com.mhmtn.gamebook.view.GameListScreen
@@ -54,6 +55,8 @@ import com.mhmtn.gamebook.view.PCGameScreen
 import com.mhmtn.gamebook.view.WebGameScreen
 import com.mhmtn.gamebook.viewmodel.PCGameViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -62,7 +65,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-
             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
             val scope = rememberCoroutineScope()
             val navController = rememberNavController()
@@ -203,6 +205,11 @@ class MainActivity : ComponentActivity() {
                 }
 
             }
+        }
+
+        val backgroundScope = CoroutineScope(Dispatchers.IO)
+        backgroundScope.launch {
+            MobileAds.initialize(this@MainActivity) {}
         }
     }
 }

@@ -31,7 +31,7 @@ class GameRepo @Inject constructor(
 
     suspend fun getGameListByPlatform(platform : String) : Resource<GameList>{
         val response = try {
-            api.getGameListByPlatform(platform = platform)
+            api.getGameListByPlatform (platform = platform)
         }catch (e:Exception){
             return Resource.Error("Error.")
         }

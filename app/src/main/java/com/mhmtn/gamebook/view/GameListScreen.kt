@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -156,11 +157,15 @@ fun GameListView(
     val screenHeight = LocalContext.current.resources.displayMetrics.heightPixels.dp /
             LocalDensity.current.density
 
+    val context = LocalContext.current
+
     LaunchedEffect(Unit){
-        while (true) {
-            delay(4000L)
-            val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
-            pagerState.scrollToPage(nextPage)
+        if (viewModel.isInternetAvailable(context)){
+            while (true) {
+                delay(4000L)
+                val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
+                pagerState.scrollToPage(nextPage)
+            }
         }
     }
 
@@ -239,7 +244,6 @@ fun <T> List<T>.takeRandomElements(numberOfElements: Int): List<T> {
 fun LazyGridScope.header(
     content : @Composable LazyGridItemScope.() -> Unit
 ){
-
     item(
         span = { GridItemSpan(maxLineSpan) },
         content = content

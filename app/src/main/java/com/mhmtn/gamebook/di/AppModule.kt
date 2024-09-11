@@ -17,10 +17,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun providesGameRepo(
-        api: GameAPI
-    ) = GameRepo(api)
-
+    fun providesGameRepo(api: GameAPI) = GameRepo(api)
 
     @Singleton
     @Provides
@@ -31,6 +28,5 @@ object AppModule {
             .build()
             .create(GameAPI::class.java)
     }
-
 
 }
