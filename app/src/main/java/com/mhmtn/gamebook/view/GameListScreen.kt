@@ -122,13 +122,15 @@ fun GameList(
     navController: NavController,
     viewModel: GameListViewModel = hiltViewModel()
 ) {
-    val gameList = viewModel.gameList
-    val error = remember { viewModel.errorMessage }
-    val isLoading = remember { viewModel.isLoading }
+    val gameList by remember {
+        viewModel.gameList
+    }
+    val error by remember { viewModel.errorMessage }
+    val isLoading by remember { viewModel.isLoading }
     val pagerState = rememberPagerState(pageCount = { viewModel.gameList.value.getUrls().size })
 
     GameListView(
-        games = gameList.value,
+        games = gameList,
         navController = navController,
         pagerState = pagerState,
         viewModel = viewModel
@@ -139,7 +141,7 @@ fun GameList(
             CircularProgressIndicator()
         }
         if (error.isNotEmpty()) {
-            Text(text = "Error.")
+            Text(text = "Error.", color = Color.Red)
         }
     }
 
@@ -154,13 +156,13 @@ fun GameListView(
     viewModel: GameListViewModel
 ) {
 
-    val screenHeight = LocalContext.current.resources.displayMetrics.heightPixels.dp /
-            LocalDensity.current.density
-
     val context = LocalContext.current
 
-    LaunchedEffect(Unit){
-        if (viewModel.isInternetAvailable(context)){
+    val screenHeight = context.resources.displayMetrics.heightPixels.dp /
+            LocalDensity.current.density
+
+    if (viewModel.isInternetAvailable(context = context)){
+        LaunchedEffect(Unit) {
             while (true) {
                 delay(4000L)
                 val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
@@ -172,7 +174,7 @@ fun GameListView(
     LazyVerticalGrid(
         columns = GridCells.Fixed(2)
     ) {
-        
+
         header {
             HorizontalPager(
                 state = pagerState,
@@ -219,7 +221,7 @@ fun GameListView(
             }
             Spacer(modifier = Modifier.height(30.dp))
         }
-        
+
         items(items = games) { game ->
             GameCard(
                 modifier = Modifier
@@ -242,8 +244,8 @@ fun <T> List<T>.takeRandomElements(numberOfElements: Int): List<T> {
 }
 
 fun LazyGridScope.header(
-    content : @Composable LazyGridItemScope.() -> Unit
-){
+    content: @Composable LazyGridItemScope.() -> Unit
+) {
     item(
         span = { GridItemSpan(maxLineSpan) },
         content = content

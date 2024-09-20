@@ -23,8 +23,8 @@ class GameListViewModel @Inject constructor(
 ) : ViewModel() {
 
     var gameList = mutableStateOf<List<GameListItem>>(listOf())
-    var isLoading by mutableStateOf(false)
-    var errorMessage by mutableStateOf("")
+    var isLoading = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
 
     private var initialGameList = listOf<GameListItem>()
     private var isSearchStarting = true
@@ -74,7 +74,7 @@ class GameListViewModel @Inject constructor(
 
     fun loadGames(){
         viewModelScope.launch {
-            isLoading = true
+            isLoading.value = true
             val result = repo.getGameList()
 
             when(result){
@@ -94,13 +94,13 @@ class GameListViewModel @Inject constructor(
                             gameListItem.title,)
                     }
                     gameList.value = s
-                    errorMessage = ""
-                    isLoading = false
+                    errorMessage.value = ""
+                    isLoading.value = false
                 }
 
                 is Resource.Error -> {
-                    errorMessage = result.message ?: "Error."
-                    isLoading = false
+                    errorMessage.value = result.message ?: "Error."
+                    isLoading.value = false
                 }
 
                 else -> {}
