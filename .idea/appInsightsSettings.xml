@@ -8,7 +8,11 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
+<<<<<<< HEAD
                   <option name="appId" value="com.mhmtn.cryptoarea" />
+=======
+                  <option name="appId" value="com.mhmtn.gamebook" />
+>>>>>>> master
                 </ConnectionSetting>
               </option>
               <option name="failureTypes">

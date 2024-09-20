@@ -13,8 +13,8 @@ android {
         applicationId = "com.mhmtn.gamebook"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -105,4 +105,7 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-pager:0.18.0")
 
     implementation ("androidx.core:core-splashscreen:1.0.1")
+
+    implementation("com.google.android.gms:play-services-ads:23.3.0")
+
 }

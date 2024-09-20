@@ -55,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -62,6 +63,9 @@ import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.mhmtn.gamebook.model.GameDetail
 import com.mhmtn.gamebook.util.Resource
 import com.mhmtn.gamebook.viewmodel.GameDetailViewModel
@@ -72,25 +76,25 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun GameDetailScreen(
-    id:Int,
+    id: Int,
     navController: NavController,
-    viewModel : GameDetailViewModel = hiltViewModel()
+    viewModel: GameDetailViewModel = hiltViewModel()
 ) {
 
 
-    val game by produceState<Resource<GameDetail>>(initialValue = Resource.Loading()){
-        value=viewModel.getGame(id = id)
+    val game by produceState<Resource<GameDetail>>(initialValue = Resource.Loading()) {
+        value = viewModel.getGame(id = id)
     }
 
     val uriHandler = LocalUriHandler.current
 
-    when(game){
+    when (game) {
         is Resource.Success -> {
 
             val gameItem = game.data!!
             val pagerState = rememberPagerState(pageCount = gameItem.screenshots.size)
 
-            LaunchedEffect(Unit){
+            LaunchedEffect(Unit) {
                 while (true) {
                     delay(4000L)
                     val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
@@ -106,12 +110,12 @@ fun GameDetailScreen(
             ) {
                 NavBar(
                     title = gameItem.title
-                ){
+                ) {
                     navController.navigateUp()
                 }
 
                 Spacer(modifier = Modifier.height(height = 20.dp))
-                
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -121,56 +125,60 @@ fun GameDetailScreen(
                 ) {
                     Box(
                         modifier = Modifier.wrapContentSize()
-                    ){
-                    HorizontalPager(state = pagerState, modifier = Modifier
-                        .wrapContentSize()
-                    ) {currentPage->
-                        Card (
-                            modifier = Modifier
+                    ) {
+                        HorizontalPager(
+                            state = pagerState, modifier = Modifier
                                 .wrapContentSize()
-                                .padding(16.dp),
-                            elevation = CardDefaults.cardElevation(8.dp)
-                        ) {
-                            SubcomposeAsyncImage(
-                                model = gameItem.screenshots[currentPage].image,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
+                        ) { currentPage ->
+                            Card(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .size(250.dp)
-                                    .padding(vertical = 8.dp, horizontal = 12.dp)
-                                    .align(alignment = Alignment.CenterHorizontally)
-                                    .clip(shape = MaterialTheme.shapes.medium),
-                                loading = {
-                                    ConstraintLayout(modifier = Modifier.fillMaxSize()) {
-                                        val indicatorRef = createRef()
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.constrainAs(indicatorRef){
-                                                top.linkTo(parent.top)
-                                                bottom.linkTo(parent.bottom)
-                                                start.linkTo(parent.start)
-                                                end.linkTo(parent.end)
-                                            }
+                                    .wrapContentSize()
+                                    .padding(16.dp),
+                                elevation = CardDefaults.cardElevation(8.dp)
+                            ) {
+                                SubcomposeAsyncImage(
+                                    model = gameItem.screenshots[currentPage].image,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .size(250.dp)
+                                        .padding(vertical = 8.dp, horizontal = 12.dp)
+                                        .align(alignment = Alignment.CenterHorizontally)
+                                        .clip(shape = MaterialTheme.shapes.medium),
+                                    loading = {
+                                        ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+                                            val indicatorRef = createRef()
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.constrainAs(indicatorRef) {
+                                                    top.linkTo(parent.top)
+                                                    bottom.linkTo(parent.bottom)
+                                                    start.linkTo(parent.start)
+                                                    end.linkTo(parent.end)
+                                                }
+                                            )
+                                        }
+                                    },
+                                    error = {
+                                        Icon(
+                                            imageVector = Icons.Default.Info,
+                                            contentDescription = null,
+                                            tint = Color.Red
                                         )
                                     }
-                                },
-                                error = {
-                                    Icon(imageVector = Icons.Default.Info, contentDescription = null,
-                                        tint = Color.Red)
-                                }
 
-                            )
+                                )
+                            }
                         }
-                    }
                         IconButton(
                             onClick = {
                                 val nextPage = pagerState.currentPage + 1
-                                if(nextPage < gameItem.screenshots.size ) {
+                                if (nextPage < gameItem.screenshots.size) {
                                     scope.launch {
                                         pagerState.scrollToPage(nextPage)
                                     }
                                 }
-                                      },
+                            },
                             modifier = Modifier
                                 .padding(30.dp)
                                 .size(30.dp)
@@ -180,15 +188,18 @@ fun GameDetailScreen(
                                 containerColor = Color(0x6F373737)
                             )
                         ) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next",
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "Next",
                                 modifier = Modifier.fillMaxSize(),
-                                tint = Color.LightGray)
+                                tint = Color.LightGray
+                            )
                         }
 
                         IconButton(
                             onClick = {
-                                val prevPage = pagerState.currentPage -1
-                                if(prevPage >= 0 ) {
+                                val prevPage = pagerState.currentPage - 1
+                                if (prevPage >= 0) {
                                     scope.launch {
                                         pagerState.scrollToPage(prevPage)
                                     }
@@ -203,44 +214,46 @@ fun GameDetailScreen(
                                 containerColor = Color(0x52373737)
                             )
                         ) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous",
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "Previous",
                                 modifier = Modifier.fillMaxSize(),
-                                tint = Color.LightGray)
+                                tint = Color.LightGray
+                            )
                         }
-                }
+                    }
 
                     PageIndicator(
                         pageCount = gameItem.screenshots.size,
                         currentPage = pagerState.currentPage
                     )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                        Text(
-                            text = "About ${gameItem.title} ",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontFamily = FontFamily(Font(R.font.acme)),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.padding(vertical = 10.dp)
-                        )
+                    Text(
+                        text = "About ${gameItem.title} ",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontFamily = FontFamily(Font(R.font.acme)),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(vertical = 10.dp)
+                    )
 
-                    Column (
+                    Column(
                         modifier = Modifier
                             .animateContentSize(animationSpec = tween(100))
                             .clickable(interactionSource = remember {
                                 MutableInteractionSource()
                             }, indication = null)
-                            {showMore = !showMore}
+                            { showMore = !showMore }
                     ) {
-                        if (showMore){
+                        if (showMore) {
                             Text(
                                 text = gameItem.description,
                                 modifier = Modifier.padding(vertical = 4.dp),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
-                        } else
-                        {
+                        } else {
                             Text(
                                 text = gameItem.description,
                                 modifier = Modifier.padding(vertical = 4.dp),
@@ -252,153 +265,159 @@ fun GameDetailScreen(
                         }
                     }
 
-                        Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
 
-                        Text(
-                            text = "Extra ",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontFamily = FontFamily(Font(R.font.acme)),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.padding(vertical = 10.dp)
-                        )
+                    Text(
+                        text = "Extra ",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontFamily = FontFamily(Font(R.font.acme)),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(vertical = 10.dp)
+                    )
 
-                        ExtraRow(
-                            firstTitle =  "Title",
-                            textColor = MaterialTheme.colorScheme.onSurface,
-                            informationContent = "Developer")
+                    ExtraRow(
+                        firstTitle = "Title",
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        informationContent = "Developer"
+                    )
 
-                        ExtraRow(
-                            firstTitle = gameItem.title,
-                            textColor = MaterialTheme.colorScheme.onBackground,
-                            informationContent = gameItem.developer)
+                    ExtraRow(
+                        firstTitle = gameItem.title,
+                        textColor = MaterialTheme.colorScheme.onBackground,
+                        informationContent = gameItem.developer
+                    )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                        ExtraRow(
-                            firstTitle =  "Publisher",
-                            textColor = MaterialTheme.colorScheme.onSurface,
-                            informationContent = "Release Date")
+                    ExtraRow(
+                        firstTitle = "Publisher",
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        informationContent = "Release Date"
+                    )
 
-                        ExtraRow(
-                            firstTitle = gameItem.publisher,
-                            textColor = MaterialTheme.colorScheme.onBackground,
-                            informationContent = gameItem.release_date)
+                    ExtraRow(
+                        firstTitle = gameItem.publisher,
+                        textColor = MaterialTheme.colorScheme.onBackground,
+                        informationContent = gameItem.release_date
+                    )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                        ExtraRow(
-                            firstTitle =  "Genre",
-                            textColor = MaterialTheme.colorScheme.onSurface,
-                            informationContent = "Platform")
+                    ExtraRow(
+                        firstTitle = "Genre",
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        informationContent = "Platform"
+                    )
 
-                        ExtraRow(
-                            firstTitle = gameItem.genre,
-                            textColor = MaterialTheme.colorScheme.onBackground,
-                            informationContent = gameItem.platform,
-                            icon = {
-                                val resource = if(gameItem.platform.contains("windows", ignoreCase = true)){
+                    ExtraRow(
+                        firstTitle = gameItem.genre,
+                        textColor = MaterialTheme.colorScheme.onBackground,
+                        informationContent = gameItem.platform,
+                        icon = {
+                            val resource =
+                                if (gameItem.platform.contains("windows", ignoreCase = true)) {
                                     Icons.Default.DesktopWindows
-                                }
-                                else{
+                                } else {
                                     Icons.Default.Web
                                 }
-                                Box(modifier = Modifier.padding(end = 5.dp)){
-                                    Icon(imageVector = resource, contentDescription =  null,
-                                        tint = Color.LightGray)
-                                }
+                            Box(modifier = Modifier.padding(end = 5.dp)) {
+                                Icon(
+                                    imageVector = resource, contentDescription = null,
+                                    tint = Color.LightGray
+                                )
                             }
-                            )
+                        }
+                    )
 
-                        Spacer(modifier = Modifier.height(height = 30.dp))
+                    Spacer(modifier = Modifier.height(height = 30.dp))
 
 
                     gameItem.minimum_system_requirements?.let {
 
-                            Text(
-                                text = "Minimum System Requirements",
-                                fontFamily = FontFamily(Font(R.font.acme)),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(height = 20.dp))
+                        Text(
+                            text = "Minimum System Requirements",
+                            fontFamily = FontFamily(Font(R.font.acme)),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(height = 20.dp))
 
-                            Text(
-                                text = "OS",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = it.os,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
+                        Text(
+                            text = "OS",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = it.os,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
 
-                            Spacer(modifier = Modifier.height(height = 15.dp))
+                        Spacer(modifier = Modifier.height(height = 15.dp))
 
-                            Text(
-                                text = "Memory",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                        Text(
+                            text = "Memory",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-                            Text(
-                                text = it.memory,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Spacer(modifier = Modifier.height(height = 15.dp))
+                        Text(
+                            text = it.memory,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(height = 15.dp))
 
-                            Text(
-                                text = "Storage",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                        Text(
+                            text = "Storage",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-                            Text(
-                                text = it.storage,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Spacer(modifier = Modifier.height(height = 15.dp))
+                        Text(
+                            text = it.storage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(height = 15.dp))
 
-                            Text(
-                                text = "Graphics",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                        Text(
+                            text = "Graphics",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-                            Text(
-                                text = it.graphics,
-                                style =MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
+                        Text(
+                            text = it.graphics,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
 
 
-                            Spacer(modifier = Modifier.height(height = 15.dp))
-                            Text(
-                                text = "All material on this page is copyrigthed by (${gameItem.developer}).",
-                                fontSize = 11.sp ,
-                                color = Color.Gray
-                            )
+                        Spacer(modifier = Modifier.height(height = 15.dp))
+                        Text(
+                            text = "All material on this page is copyrigthed by (${gameItem.developer}).",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
 
-                            Spacer(modifier = Modifier.padding(20.dp))
+                        Spacer(modifier = Modifier.padding(20.dp))
 
+                    }
+
+                    LeadingIconButton(
+                        text = " Play The Game",
+                        modifier = Modifier.align(alignment = Alignment.CenterHorizontally)
+                    ) {
+                        uriHandler.openUri(gameItem.game_url)
                         }
-
-                        LeadingIconButton(
-                            text = " Play The Game" ,
-                            modifier = Modifier.align(alignment = Alignment.CenterHorizontally)
-                        ) {
-                            uriHandler.openUri(gameItem.game_url)
-                        }
-
+                    BannerAdView("ca-app-pub-3239252626734491/6801582889")
+                    }
                 }
-
-            }
         }
 
         is Resource.Error -> {
@@ -429,11 +448,11 @@ fun GameDetailScreen(
 @Composable
 fun PageIndicator(pageCount: Int, currentPage: Int) {
 
-    Row (
+    Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
-    ){
-        repeat(pageCount){
+    ) {
+        repeat(pageCount) {
             IndicatorDots(isSelected = it == currentPage)
         }
     }
@@ -443,21 +462,22 @@ fun PageIndicator(pageCount: Int, currentPage: Int) {
 @Composable
 fun IndicatorDots(isSelected: Boolean) {
 
-    val size = animateDpAsState(targetValue = if(isSelected) 12.dp else 10.dp, label = "")
+    val size = animateDpAsState(targetValue = if (isSelected) 12.dp else 10.dp, label = "")
 
-    Box(modifier = Modifier
-        .padding(2.dp)
-        .size(size.value)
-        .clip(CircleShape)
-        .background(if (isSelected) Color(0xff373737) else Color(0xA8373737))
+    Box(
+        modifier = Modifier
+            .padding(2.dp)
+            .size(size.value)
+            .clip(CircleShape)
+            .background(if (isSelected) Color(0xff373737) else Color(0xA8373737))
     )
-    
+
 }
 
 @Composable
 fun NavBar(
-    title:String,
-    onBackPress : () ->Unit
+    title: String,
+    onBackPress: () -> Unit
 ) {
 
     Row(
@@ -478,7 +498,20 @@ fun NavBar(
         Text(text = "Detail's of the $title")
         Spacer(modifier = Modifier.requiredWidth(26.dp))
     }
-
-
+}
+@Composable
+fun BannerAdView(adId : String) {
+    AndroidView(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = Color.White),
+        factory = { context ->
+            AdView(context).apply {
+                setAdSize(AdSize.BANNER)
+                adUnitId = adId
+                loadAd(AdRequest.Builder().build())
+            }
+        }
+    )
 }
 
