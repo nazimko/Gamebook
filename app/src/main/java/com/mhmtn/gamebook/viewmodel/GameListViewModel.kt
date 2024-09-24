@@ -4,9 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mhmtn.gamebook.model.GameListItem
@@ -76,9 +74,9 @@ class GameListViewModel @Inject constructor(
         viewModelScope.launch {
             isLoading.value = true
             val result = repo.getGameList()
-
             when(result){
                 is Resource.Success -> {
+
                     val s = result.data!!.mapIndexed { index, gameListItem ->
                         GameListItem(
                             gameListItem.developer,
@@ -91,11 +89,18 @@ class GameListViewModel @Inject constructor(
                             gameListItem.release_date,
                             gameListItem.short_description,
                             gameListItem.thumbnail,
-                            gameListItem.title,)
+                            gameListItem.title)
                     }
-                    gameList.value = s
-                    errorMessage.value = ""
-                    isLoading.value = false
+                    val gameIds = result.data.map { it.id }
+
+                    repo.getFavoriteGames(gameIds).collect{
+                        val updatedGames = result.data.map {game->
+                            game.copy(isFavorite = it.contains(game.id))
+                        }
+                        gameList.value = updatedGames
+                        errorMessage.value = ""
+                        isLoading.value = false
+                    }
                 }
 
                 is Resource.Error -> {
@@ -107,4 +112,18 @@ class GameListViewModel @Inject constructor(
             }
         }
     }
+
+    fun onFavoriteClick(game: GameListItem) {
+        viewModelScope.launch {
+            if (game.isFavorite) {
+                repo.removeFavorite(game)
+            } else {
+                repo.addFavorite(game)
+            }
+            gameList.value = gameList.value.map {
+                if (it.id == game.id) it.copy(isFavorite = !game.isFavorite) else it
+            }
+        }
+    }
+
 }

@@ -11,5 +11,6 @@ data class GameListItem(
     val release_date: String,
     val short_description: String,
     val thumbnail: String,
-    val title: String
+    val title: String,
+    val isFavorite: Boolean = false
 )

@@ -160,7 +160,7 @@ fun GameListView(
 
     val screenHeight = context.resources.displayMetrics.heightPixels.dp /
             LocalDensity.current.density
-
+/*
     if (viewModel.isInternetAvailable(context = context)){
         LaunchedEffect(Unit) {
             while (true) {
@@ -170,6 +170,8 @@ fun GameListView(
             }
         }
     }
+
+ */
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2)
@@ -228,7 +230,10 @@ fun GameListView(
                     .padding(all = 8.dp)
                     .requiredHeight(height = screenHeight * 0.45f),
                 game = game,
-                navController = navController
+                navController = navController,
+                onFavoriteClick = {
+                    viewModel.onFavoriteClick(game)
+                }
             )
         }
     }

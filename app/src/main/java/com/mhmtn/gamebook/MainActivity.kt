@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.DesktopWindows
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.WebAsset
 import androidx.compose.material3.DrawerValue
@@ -49,6 +50,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.android.gms.ads.MobileAds
 import com.mhmtn.gamebook.ui.theme.GamebookTheme
+import com.mhmtn.gamebook.view.FavoritesScreen
 import com.mhmtn.gamebook.view.GameDetailScreen
 import com.mhmtn.gamebook.view.GameListScreen
 import com.mhmtn.gamebook.view.LatestGameScreen
@@ -148,6 +150,21 @@ class MainActivity : ComponentActivity() {
                                     tint = MaterialTheme.colorScheme.primary
                                 ) }
                             )
+                            Spacer(modifier = Modifier.padding(8.dp))
+                            NavigationDrawerItem(label = { Text(text = "My Favorites", fontSize = 17.sp, fontWeight = FontWeight.Bold) }, selected = false , onClick = {
+                                scope.launch {
+                                    drawerState.close()
+                                    navController.navigate("favorites_screen")
+                                } },
+                                modifier = Modifier
+                                    .requiredHeight(45.dp),
+                                icon = { Icon(
+                                    imageVector = Icons.Filled.Favorite,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                ) }
+                            )
+
                         }
                     }
                 ) {
@@ -200,6 +217,9 @@ class MainActivity : ComponentActivity() {
 
                             composable("latest_games_filter_screen"){
                                 LatestGameScreen(navController)
+                            }
+                            composable("favorites_screen"){
+                                FavoritesScreen(navController)
                             }
 
                         }
