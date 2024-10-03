@@ -9,6 +9,10 @@ import com.mhmtn.gamebook.model.GameListItem
 import com.mhmtn.gamebook.repo.GameRepo
 import com.mhmtn.gamebook.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,11 +21,8 @@ class PCGameViewModel @Inject constructor(
     private val repo : GameRepo
 ) : ViewModel() {
 
-
-    var gameList = mutableStateOf<List<GameListItem>>(listOf())
-    var isLoading by mutableStateOf(false)
-    var errorMessage by mutableStateOf("")
-
+    private val _state = MutableStateFlow(GameState())
+    val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
         loadGamesByPlatform("pc")
@@ -29,7 +30,9 @@ class PCGameViewModel @Inject constructor(
 
      private fun loadGamesByPlatform(platform : String){
         viewModelScope.launch {
-            isLoading = true
+            _state.update {
+                it.copy(isLoading = true)
+            }
             val result = repo.getGameListByPlatform(platform = platform)
 
             when(result){
@@ -48,14 +51,15 @@ class PCGameViewModel @Inject constructor(
                             gameListItem.thumbnail,
                             gameListItem.title,)
                     }
-                    gameList.value = s
-                    errorMessage = ""
-                    isLoading = false
+                    _state.update {
+                        it.copy(games = s, isLoading = false)
+                    }
                 }
 
                 is Resource.Error -> {
-                    errorMessage = result.message!!
-                    isLoading = false
+                    _state.update {
+                        it.copy(errorMessage = result.message ?: "Error.", isLoading = false)
+                    }
                 }
 
                 else -> {}

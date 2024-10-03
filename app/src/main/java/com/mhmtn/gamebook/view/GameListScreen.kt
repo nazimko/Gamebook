@@ -1,6 +1,7 @@
 package com.mhmtn.gamebook.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.mhmtn.gamebook.model.GameListItem
 import com.mhmtn.gamebook.viewmodel.GameListViewModel
+import com.mhmtn.gamebook.viewmodel.GameState
 import kotlinx.coroutines.delay
 
 @Composable
@@ -70,7 +72,7 @@ fun GameListScreen(
     navController: NavController,
     viewModel: GameListViewModel = hiltViewModel()
 ) {
-
+    val state by viewModel.state.collectAsState()
     Column(modifier = Modifier.fillMaxSize()) {
 
         SearchBar(
@@ -81,7 +83,7 @@ fun GameListScreen(
             viewModel.searchGameList(it)
         }
 
-        GameList(navController = navController)
+        GameList(navController = navController, state = state)
     }
 }
 
@@ -120,33 +122,28 @@ fun SearchBar(
 @Composable
 fun GameList(
     navController: NavController,
+    state:GameState,
     viewModel: GameListViewModel = hiltViewModel()
 ) {
-    val gameList by remember {
-        viewModel.gameList
-    }
-    val error by remember { viewModel.errorMessage }
-    val isLoading by remember { viewModel.isLoading }
-    val pagerState = rememberPagerState(pageCount = { viewModel.gameList.value.getUrls().size })
+    val pagerState = rememberPagerState(pageCount = { state.games.getUrls().size })
 
     GameListView(
-        games = gameList,
+        games = state.games,
         navController = navController,
         pagerState = pagerState,
         viewModel = viewModel
     )
 
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-        if (isLoading) {
+        if (state.isLoading) {
             CircularProgressIndicator()
         }
-        if (error.isNotEmpty()) {
+        if (state.errorMessage.isNotEmpty()) {
             Text(text = "Error.", color = Color.Red)
         }
     }
 
 }
-
 
 @Composable
 fun GameListView(
@@ -160,24 +157,22 @@ fun GameListView(
 
     val screenHeight = context.resources.displayMetrics.heightPixels.dp /
             LocalDensity.current.density
-/*
-    if (viewModel.isInternetAvailable(context = context)){
+
+    if (viewModel.isInternetAvailable(context = context) && games.isNotEmpty()){
         LaunchedEffect(Unit) {
             while (true) {
-                delay(4000L)
+                delay(7500L)
                 val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
                 pagerState.scrollToPage(nextPage)
             }
         }
     }
 
- */
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(2)
     ) {
-
         header {
+            val carouselItems = games.getUrls()
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth()
@@ -189,7 +184,7 @@ fun GameListView(
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
                     SubcomposeAsyncImage(
-                        model = viewModel.gameList.value.getUrls()[index],
+                        model = carouselItems[index].url,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -197,7 +192,10 @@ fun GameListView(
                             .size(250.dp)
                             .padding(vertical = 8.dp, horizontal = 12.dp)
                             .align(alignment = Alignment.CenterHorizontally)
-                            .clip(shape = MaterialTheme.shapes.medium),
+                            .clip(shape = MaterialTheme.shapes.medium)
+                            .clickable {
+                                navController.navigate("game_detail_screen/${carouselItems[index].id}")
+                            },
                         loading = {
                             ConstraintLayout(modifier = Modifier.fillMaxSize()) {
                                 val indicatorRef = createRef()
@@ -217,7 +215,6 @@ fun GameListView(
                                 tint = Color.Red
                             )
                         }
-
                     )
                 }
             }
@@ -239,15 +236,17 @@ fun GameListView(
     }
 }
 
-fun List<GameListItem>.getUrls(): List<String> {
-    return takeRandomElements(numberOfElements = 5).map { it.thumbnail }
-}
+data class CarouselItemData(val url: String, val id: Int)
 
+fun List<GameListItem>.getUrls(): List<CarouselItemData> {
+    return takeRandomElements(numberOfElements = 5).mapIndexed { index, gameListItem ->
+        CarouselItemData(gameListItem.thumbnail,gameListItem.id)
+    }
+}
 fun <T> List<T>.takeRandomElements(numberOfElements: Int): List<T> {
     return if (numberOfElements > size) this
     else asSequence().shuffled().take(numberOfElements).toList()
 }
-
 fun LazyGridScope.header(
     content: @Composable LazyGridItemScope.() -> Unit
 ) {

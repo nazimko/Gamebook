@@ -81,7 +81,6 @@ fun GameDetailScreen(
     viewModel: GameDetailViewModel = hiltViewModel()
 ) {
 
-
     val game by produceState<Resource<GameDetail>>(initialValue = Resource.Loading()) {
         value = viewModel.getGame(id = id)
     }
@@ -92,13 +91,16 @@ fun GameDetailScreen(
         is Resource.Success -> {
 
             val gameItem = game.data!!
+
             val pagerState = rememberPagerState(pageCount = gameItem.screenshots.size)
 
-            LaunchedEffect(Unit) {
-                while (true) {
-                    delay(4000L)
-                    val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
-                    pagerState.scrollToPage(nextPage)
+            if (pagerState.pageCount != 0) {
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        delay(4000L)
+                        val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
+                        pagerState.scrollToPage(nextPage)
+                    }
                 }
             }
             val scope = rememberCoroutineScope()

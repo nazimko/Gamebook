@@ -1,5 +1,6 @@
 package com.mhmtn.gamebook.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +49,7 @@ import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import com.mhmtn.gamebook.model.GameListItem
 import com.mhmtn.gamebook.viewmodel.GameListViewModel
+import com.mhmtn.gamebook.viewmodel.GameState
 import com.mhmtn.gamebook.viewmodel.PCGameViewModel
 import kotlinx.coroutines.delay
 
@@ -54,37 +58,31 @@ fun PCGameScreen(
     navController: NavController,
     viewModel: PCGameViewModel = hiltViewModel()
 ) {
-
+    val state by viewModel.state.collectAsState()
     Column(modifier = Modifier.fillMaxSize()) {
-        GameFilterList(navController)
+        GameFilterList(navController,state)
     }
-
 }
-
 @Composable
 fun GameFilterList(
     navController: NavController,
-    viewModel: PCGameViewModel = hiltViewModel()
+    state: GameState
 ) {
 
-    val gameList = viewModel.gameList
-    val error = remember { viewModel.errorMessage }
-    val isLoading = remember { viewModel.isLoading }
-    val pagerState = rememberPagerState(pageCount = { viewModel.gameList.value.getUrls().size })
+    val pagerState = rememberPagerState(pageCount = { state.games.getUrls().size })
 
     GameFilterListView(
-        games = gameList.value,
+        games = state.games,
         navController = navController,
-        pagerState = pagerState,
-        viewModel = viewModel
+        pagerState = pagerState
     )
 
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-        if (isLoading) {
+        if (state.isLoading) {
             CircularProgressIndicator()
         }
-        if (error.isNotEmpty()) {
-            Text(text = "Error.")
+        if (state.errorMessage.isNotEmpty()) {
+            Text(text = state.errorMessage)
         }
     }
 
@@ -94,8 +92,7 @@ fun GameFilterList(
 fun GameFilterListView(
     games: List<GameListItem>,
     navController: NavController,
-    pagerState: PagerState,
-    viewModel: PCGameViewModel
+    pagerState: PagerState
 ) {
 
     val screenHeight = LocalContext.current.resources.displayMetrics.heightPixels.dp /
@@ -118,6 +115,7 @@ fun GameFilterListView(
     ) {
 
         header {
+            val carouselItems = games.getUrls()
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth()
@@ -129,7 +127,7 @@ fun GameFilterListView(
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
                     SubcomposeAsyncImage(
-                        model = viewModel.gameList.value.getUrls()[index],
+                        model = carouselItems[index].url,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -137,7 +135,10 @@ fun GameFilterListView(
                             .size(250.dp)
                             .padding(vertical = 8.dp, horizontal = 12.dp)
                             .align(alignment = Alignment.CenterHorizontally)
-                            .clip(shape = MaterialTheme.shapes.medium),
+                            .clip(shape = MaterialTheme.shapes.medium)
+                            .clickable {
+                                navController.navigate("game_detail_screen/${carouselItems[index].id}")
+                            },
                         loading = {
                             ConstraintLayout(modifier = Modifier.fillMaxSize()) {
                                 val indicatorRef = createRef()

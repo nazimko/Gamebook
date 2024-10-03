@@ -10,6 +10,10 @@ import com.mhmtn.gamebook.repo.GameRepo
 import com.mhmtn.gamebook.util.Constants.RELEASE_DATE
 import com.mhmtn.gamebook.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,11 +22,8 @@ class LatestGamesViewModel @Inject constructor(
     private val repo : GameRepo
 ) : ViewModel() {
 
-
-    var gameList = mutableStateOf<List<GameListItem>>(listOf())
-    var isLoading by mutableStateOf(false)
-    var errorMessage by mutableStateOf("")
-
+    private val _state = MutableStateFlow(GameState())
+    val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
         loadGamesByDate(RELEASE_DATE)
@@ -30,9 +31,10 @@ class LatestGamesViewModel @Inject constructor(
 
     fun loadGamesByDate(sort : String){
         viewModelScope.launch {
-            isLoading = true
+            _state.update {
+                it.copy(isLoading = true)
+            }
             val result = repo.getGameListByDate(sort = sort)
-
             when(result){
                 is Resource.Success -> {
                     val s = result.data!!.mapIndexed { index, gameListItem ->
@@ -49,16 +51,16 @@ class LatestGamesViewModel @Inject constructor(
                             gameListItem.thumbnail,
                             gameListItem.title,)
                     }
-                    gameList.value = s
-                    errorMessage = ""
-                    isLoading = false
+                    _state.update {
+                        it.copy(games = s, isLoading = false)
+                    }
                 }
 
                 is Resource.Error -> {
-                    errorMessage = result.message!!
-                    isLoading = false
+                    _state.update {
+                        it.copy(errorMessage = result.message ?: "Error.", isLoading = false)
+                    }
                 }
-
                 else -> {}
             }
         }

@@ -12,6 +12,10 @@ import com.mhmtn.gamebook.repo.GameRepo
 import com.mhmtn.gamebook.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,10 +23,8 @@ import javax.inject.Inject
 class GameListViewModel @Inject constructor(
     private val repo : GameRepo
 ) : ViewModel() {
-
-    var gameList = mutableStateOf<List<GameListItem>>(listOf())
-    var isLoading = mutableStateOf(false)
-    var errorMessage = mutableStateOf("")
+    private val _state = MutableStateFlow(GameState())
+    val state: StateFlow<GameState> = _state.asStateFlow()
 
     private var initialGameList = listOf<GameListItem>()
     private var isSearchStarting = true
@@ -34,14 +36,14 @@ class GameListViewModel @Inject constructor(
     fun searchGameList(query : String){
 
         val listToSearch = if(isSearchStarting){
-            gameList.value
+            _state.value.games
         }else {
             initialGameList
         }
 
         viewModelScope.launch (Dispatchers.Default) {
             if(query.isEmpty()){
-                gameList.value = initialGameList
+                _state.value = _state.value.copy(games = initialGameList)
                 isSearchStarting = true
                 return@launch
             }
@@ -51,10 +53,10 @@ class GameListViewModel @Inject constructor(
             }
 
             if (isSearchStarting){
-                initialGameList = gameList.value
+                initialGameList = _state.value.games
                 isSearchStarting = false
             }
-            gameList.value = results
+            _state.value = _state.value.copy(games = results)
         }
     }
 
@@ -70,42 +72,29 @@ class GameListViewModel @Inject constructor(
         }
     }
 
-    fun loadGames(){
+    private fun loadGames(){
         viewModelScope.launch {
-            isLoading.value = true
+            _state.update {
+                it.copy(isLoading = true)
+            }
             val result = repo.getGameList()
             when(result){
                 is Resource.Success -> {
-
-                    val s = result.data!!.mapIndexed { index, gameListItem ->
-                        GameListItem(
-                            gameListItem.developer,
-                            gameListItem.freetogame_profile_url,
-                            gameListItem.game_url,
-                            gameListItem.genre,
-                            gameListItem.id,
-                            gameListItem.platform,
-                            gameListItem.publisher,
-                            gameListItem.release_date,
-                            gameListItem.short_description,
-                            gameListItem.thumbnail,
-                            gameListItem.title)
-                    }
-                    val gameIds = result.data.map { it.id }
-
+                    val gameIds = result.data!!.map { it.id }
                     repo.getFavoriteGames(gameIds).collect{
                         val updatedGames = result.data.map {game->
                             game.copy(isFavorite = it.contains(game.id))
                         }
-                        gameList.value = updatedGames
-                        errorMessage.value = ""
-                        isLoading.value = false
+                        _state.update {
+                            it.copy(games = updatedGames, isLoading = false)
+                        }
                     }
                 }
 
                 is Resource.Error -> {
-                    errorMessage.value = result.message ?: "Error."
-                    isLoading.value = false
+                    _state.update {
+                        it.copy(errorMessage = result.message ?: "Error.", isLoading = false)
+                    }
                 }
 
                 else -> {}
@@ -120,10 +109,12 @@ class GameListViewModel @Inject constructor(
             } else {
                 repo.addFavorite(game)
             }
-            gameList.value = gameList.value.map {
-                if (it.id == game.id) it.copy(isFavorite = !game.isFavorite) else it
+            _state.update {currentState->
+                val games = currentState.games.map {
+                    if (it.id == game.id) game.copy(isFavorite = !it.isFavorite) else it
+                }
+                currentState.copy(games = games)
             }
         }
     }
-
 }

@@ -18,9 +18,6 @@ class FavoritesViewModel @Inject constructor (
     private val repo : GameRepo
 ) : ViewModel() {
 
-    private val _gameCardItem = MutableStateFlow(emptyList<GameDetail>())
-    val gameCardItem =_gameCardItem.asStateFlow()
-
     var gameList = mutableStateOf<Set<GameListItem>>(setOf())
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
